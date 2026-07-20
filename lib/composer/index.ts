@@ -83,7 +83,7 @@ function slugify(input: string, fallback: string) {
   return base || fallback;
 }
 
-function formatDateRange(start?: string, end?: string) {
+export function formatDateRange(start?: string, end?: string) {
   if (!start) return "";
   const fmt = (d: string, withYear = true) =>
     new Date(d).toLocaleDateString("en-GB", {

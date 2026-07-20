@@ -1,7 +1,7 @@
 import { eq, desc } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { sites, siteVersions, type SiteRow } from "@/lib/db/schema";
-import { SiteSchema, type Site, type PuckData } from "@/lib/schema";
+import { sites, siteVersions, socialKits, type SiteRow, type SocialKitRow } from "@/lib/db/schema";
+import { SiteSchema, type Site, type PuckData, type SocialKitConfig, type KitVariation } from "@/lib/schema";
 
 export async function getSiteBySlug(slug: string): Promise<SiteRow | null> {
   const [row] = await db.select().from(sites).where(eq(sites.slug, slug)).limit(1);
@@ -111,4 +111,51 @@ export async function listVersions(siteId: string, limit = 20) {
     .where(eq(siteVersions.siteId, siteId))
     .orderBy(desc(siteVersions.createdAt))
     .limit(limit);
+}
+
+// ---------------------------------------------------------------------------
+// Social Media Kit — one kit per site, keyed by siteId.
+// ---------------------------------------------------------------------------
+
+export async function getSocialKitBySiteId(siteId: string): Promise<SocialKitRow | null> {
+  const [row] = await db
+    .select()
+    .from(socialKits)
+    .where(eq(socialKits.siteId, siteId))
+    .limit(1);
+  return row ?? null;
+}
+
+export async function getSocialKitById(id: string): Promise<SocialKitRow | null> {
+  const [row] = await db.select().from(socialKits).where(eq(socialKits.id, id)).limit(1);
+  return row ?? null;
+}
+
+export async function createSocialKit(
+  siteId: string,
+  config: SocialKitConfig,
+  variations: KitVariation[]
+): Promise<SocialKitRow> {
+  const [row] = await db
+    .insert(socialKits)
+    .values({ siteId, config, variations })
+    .returning();
+  return row;
+}
+
+/** Partial update — only touches the fields that are passed in. */
+export async function saveSocialKit(
+  id: string,
+  updates: {
+    config?: SocialKitConfig;
+    variations?: KitVariation[];
+    selectedVariationId?: string | null;
+  }
+): Promise<SocialKitRow | null> {
+  const [row] = await db
+    .update(socialKits)
+    .set({ ...updates, updatedAt: new Date() })
+    .where(eq(socialKits.id, id))
+    .returning();
+  return row ?? null;
 }

@@ -1,5 +1,5 @@
 "use client";
-
+import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { Puck, type Data } from "@measured/puck";
 import "@measured/puck/puck.css";
@@ -116,6 +116,12 @@ export function SiteEditor({
                 {state === "published" && `Published ${message}`}
                 {state === "error" && message}
               </span>
+              <Link
+                href={`/social-kit/${siteId}`}
+                className="mr-3 self-center rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
+              >
+                Social Media Kit
+              </Link>
               {children}
             </>
           ),

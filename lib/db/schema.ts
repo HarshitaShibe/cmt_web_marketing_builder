@@ -8,6 +8,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import type { Site } from "@/lib/schema";
+import type { SocialKitConfig, KitVariation } from "@/lib/schema";
 
 export const sites = pgTable(
   "sites",
@@ -54,5 +55,29 @@ export const siteVersions = pgTable(
   (table) => [index("site_versions_site_idx").on(table.siteId)]
 );
 
+export const socialKits = pgTable(
+  "social_kits",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    siteId: uuid("site_id")
+      .notNull()
+      .references(() => sites.id, { onDelete: "cascade" }),
+
+    config: jsonb("config").$type<SocialKitConfig>().notNull(),
+    variations: jsonb("variations").$type<KitVariation[]>().notNull().default([]),
+    selectedVariationId: text("selected_variation_id"),
+
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("social_kits_site_idx").on(table.siteId)]
+);
+
 export type SiteRow = typeof sites.$inferSelect;
 export type NewSiteRow = typeof sites.$inferInsert;
+export type SocialKitRow = typeof socialKits.$inferSelect;
+export type NewSocialKitRow = typeof socialKits.$inferInsert;
