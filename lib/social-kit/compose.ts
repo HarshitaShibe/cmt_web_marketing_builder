@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import {
   KIT_STYLE_IDS,
   KIT_LAYOUTS,
+  KIT_PLATFORMS,
   KitFieldsSchema,
   KitStyleOverridesSchema,
   KitVariationSchema,
@@ -12,9 +13,13 @@ import {
   type KitLayout,
   type KitFields,
   type KitVariation,
+  type KitPlatform,
+  type DesignDocument,
 } from "@/lib/schema";
-import { TEMPLATES, getTemplate } from "@/lib/theme/presets";
+import { TEMPLATES, getTemplate, getFontPair } from "@/lib/theme/presets";
 import { formatDateRange } from "@/lib/composer";
+import { buildStarterDesignDocument } from "./design-presets";
+import { PLATFORM_DIMENSIONS } from "./templates";
 
 const VARIATION_NAMES: Partial<Record<KitStyleId, string>> = {
   "academic-classic": "Academic",
@@ -96,6 +101,25 @@ export function composeSocialKit(
 
   return styles.map((styleId, index) => {
     const layout = KIT_LAYOUTS[index % KIT_LAYOUTS.length];
+    const style = KitStyleOverridesSchema.parse(LAYOUT_DEFAULTS[layout]);
+    const colors = resolveColors(styleId, config);
+    const fonts = getFontPair(style.fontPairId);
+
+    // One DesignDocument per platform, each at that platform's real pixel
+    // dimensions — not one document forced to fit every aspect ratio.
+    const documents: Partial<Record<KitPlatform, DesignDocument>> = {};
+    for (const platform of KIT_PLATFORMS) {
+      const dims = PLATFORM_DIMENSIONS[platform];
+      documents[platform] = buildStarterDesignDocument(layout, {
+        width: dims.width,
+        height: dims.height,
+        colors,
+        fonts,
+        fields,
+        style,
+      });
+    }
+
     return KitVariationSchema.parse({
       id: randomUUID(),
       name: VARIATION_NAMES[styleId] ?? getTemplate(styleId).name,
@@ -104,8 +128,9 @@ export function composeSocialKit(
       recommended: styleId === recommended,
       fields,
       captions: [],
-      colors: resolveColors(styleId, config),
-      style: KitStyleOverridesSchema.parse(LAYOUT_DEFAULTS[layout]),
+      colors,
+      style,
+      documents,
     });
   });
 }

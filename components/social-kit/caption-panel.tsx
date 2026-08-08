@@ -20,7 +20,7 @@ export function CaptionPanel({
     if (!kitId) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/social-kit/${kitId}/captions`, {
+      const res = await fetch(`/api/social-kit/generate/${kitId}/captions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ variationId: variation.id }),

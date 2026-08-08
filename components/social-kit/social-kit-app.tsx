@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { ConfigurationScreen } from "./configuration-screen";
 import { ResultsScreen } from "./results-screen";
-import { KitEditor } from "./kit-editor";
+import { DesignEditor } from "./design-editor";
 import { recommendStyleId } from "@/lib/social-kit/compose";
 import { emptySocialKitConfig } from "@/lib/schema";
 import type { Image, Site, SocialKitConfig, KitVariation } from "@/lib/schema";
@@ -77,7 +77,10 @@ export function SocialKitApp({
     setVariations(next);
 
     if (!kitId) return;
-    await fetch(`/api/social-kit/${kitId}`, {
+    // Note: the route lives at /api/social-kit/generate/[kitid] (kit
+    // creation and per-kit mutation share the same dynamic segment) — not
+    // /api/social-kit/[kitId], which doesn't exist.
+    await fetch(`/api/social-kit/generate/${kitId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ variations: next }),
@@ -108,16 +111,14 @@ export function SocialKitApp({
     const variation = variations.find((v) => v.id === editingId);
     if (variation) {
       return (
-        <KitEditor
+        <DesignEditor
           kitId={kitId}
           variation={variation}
           platforms={config.platforms}
           existingAssets={existingAssets}
+          facts={site.meta}
           onBack={() => setScreen("results")}
-          onSave={async (updated) => {
-            await saveVariation(updated);
-            setScreen("results");
-          }}
+          onSave={saveVariation}
         />
       );
     }
